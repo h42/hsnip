@@ -1,8 +1,11 @@
 {-# LANGUAGE BangPatterns #-}
+import qualified Data.Foldable as F
 import qualified Data.Sequence as S
-import Data.Sequence (ViewL(..),ViewR(..),(<|),(|>))
+import Data.Sequence (ViewL(..),ViewR(..),(<|),(|>),(><))
 
 import System.Random
+
+-- Data.Foldable used for toList and all other folds
 
 -----------------------------
 -- QUEUE
@@ -15,7 +18,7 @@ deq s =  case (S.viewr s) of
     s' :> x -> Just (x,s')
     S.EmptyR -> Nothing
 
-test_q = do
+test_queue = do
     let s = (enq 5 . enq 4 . enq 3 . enq 2) S.empty -- :: S.Seq Int
     putStrLn "--\n--Queue Test\n--"
     print s
@@ -32,7 +35,7 @@ f1 = s2 where
 
 test_sort = do
     g <- getStdGen
-    let n = 100000
+    let n = 10000
 	rs = randomRs (0,n-1) g :: [Int]
 	s = S.sort $ S.fromList (take n rs) -- approx same speed as list
     putStrLn "--\n--Sort Test\n--"
@@ -40,9 +43,28 @@ test_sort = do
     print $ S.drop (n-10) s
 
 -----------------------------
+-- Random Access
+-----------------------------
+test_rand = do
+    let n' = 1000000
+	mkseq i n s
+	    | i < n = mkseq (i+1) n (s |> i)
+	    | otherwise = s
+
+	--myseq = S.fromList [0..n'-1]
+	myseq = mkseq 0 n' S.empty
+    print $ S.length myseq
+
+    print $ F.foldl' (+) 0 myseq -- USES FUNCTION FROM DATA.FOLDABLE
+
+    -- sequences are functors so use fmap
+    print $ S.length $ fmap (\x -> x*2) myseq
+
+-----------------------------
 -- Index / Update
 -----------------------------
 
 main = do
-    --test_q
-    test_sort
+    test_rand
+    --test_sort
+    --test_queue
