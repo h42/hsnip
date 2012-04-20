@@ -43,9 +43,9 @@ test_sort = do
     print $ S.drop (n-10) s
 
 -----------------------------
--- Random Access
+-- Sequential Access
 -----------------------------
-test_rand = do
+test_sequential = do
     let n' = 1000000
 	mkseq i n s
 	    | i < n = mkseq (i+1) n (s |> i)
@@ -61,10 +61,33 @@ test_rand = do
     print $ S.length $ fmap (\x -> x*2) myseq
 
 -----------------------------
+-- Random Access
+-----------------------------
+test_rand = do
+    g <- getStdGen
+    let n' = 1000000
+	rs' = randomRs (0,n'-1) g :: [Int]
+	mkseq i n s
+	    | i < n = mkseq (i+1) n (s |> i)
+	    | otherwise = s
+	--myseq = S.fromList [0..n'-1]
+	myseq = mkseq 0 n' S.empty
+
+	testseq i n (r:rs) s
+	    | i >= n = "Good"
+	    | r == y = testseq (i+1) n rs s
+	    | otherwise = "Bad"
+	  where
+	    y = S.index s r
+    print $ testseq 0 n' rs' myseq
+
+
+-----------------------------
 -- Index / Update
 -----------------------------
 
 main = do
     test_rand
+    --test_sequential
     --test_sort
     --test_queue
