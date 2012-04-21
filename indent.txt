@@ -1,0 +1,29 @@
+"where let do of"
+
+From wikibooks Haskell :: Functional Programming with Types
+
+The general rule for layout is that an open-brace is inserted after the
+keywords where, let, do and of, and the column position at which the next
+command appears is remembered. From then on, a semicolon is inserted before
+every new line that is indented the same amount. If a following line is
+indented less, a close-brace is inserted. This may sound complicated, but if
+you follow the general rule of indenting after each of those keywords, you'll
+never have to remember it (see the Indentation chapter for a more complete
+discussion of layout).
+
+Some people prefer not to use layout and write the braces and semicolons
+explicitly. This is perfectly acceptable. In this style, the above function
+might look like:
+
+f x = case x of
+        { 0 -> 1 ; 1 -> 5 ; 2 -> 2 ; _ -> -1 }
+
+Of course, if you write the braces and semicolons explicitly, you're free to
+structure the code as you wish. The following is also equally valid:
+
+f x =
+    case x of { 0 -> 1 ;
+      1 -> 5 ; 2 -> 2
+   ; _ -> -1 }
+
+

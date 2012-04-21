@@ -1,7 +1,8 @@
 HSFLAGS = -O -fwarn-name-shadowing  -XOverloadedStrings
 CLG = $(HSFLAGS) -dynamic --make -O
 
-PROGS=sequence
+PROGS=isString
+
 all:$(PROGS)
 
 % : %.hs
