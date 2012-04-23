@@ -1,7 +1,7 @@
 HSFLAGS = -O -fwarn-name-shadowing  -XOverloadedStrings
 CLG = $(HSFLAGS) -dynamic --make -O
 
-PROGS=isString
+PROGS=signal
 
 all:$(PROGS)
 
