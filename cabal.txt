@@ -1,5 +1,5 @@
 BUILD CABAL PKG
-runghc Setup configure --prefix $HOME/.cabal --enable-static -p
+runghc Setup configure --prefix $HOME/.cabal --enable-shared -p
 runghc Setup configure --prefix $HOME/.cabal --disable-shared -p
 runghc Setup build
 sudo runghc Setup install
