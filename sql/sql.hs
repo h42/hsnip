@@ -1,37 +1,42 @@
 import Database.SQLite3
 import Text.Printf
-import Control.Monad
-import System.IO.Error
+import Control.Monad (when)
 import Control.Exception (bracket)
 
 -----------------------------------------------
-exec conn sql = bracket (prepare conn sql)
-			(\stmt -> finalize stmt)
-			(\stmt -> step stmt)
+execE conn sql = execEf conn sql step
+
+exec conn sql = execf conn sql step
+
+execEf conn sql f = flip catch
+    (\e -> return (Left ("Failed: " ++ sql)))
+    $ do
+	bracket (prepare conn sql)
+		(\stmt -> finalize stmt)
+		(\stmt -> f stmt)
+	return (Right "OK")
+
+execf conn sql f = bracket
+    (prepare conn sql)
+    (\stmt -> finalize stmt)
+    (\stmt -> f stmt)
 
 -----------------------------------------------
-in_sql = "insert into t1 values(?,?)"
+insrows_sql = "insert into t1 values(?,?)"
 
-inserter conn cnt = bracket (prepare conn in_sql)
-			    (\stmt -> finalize stmt)
-			    (\stmt -> insrows 0 cnt stmt)
-
+insrows :: Int -> Int -> Statement -> IO ()
 insrows i n stmt = do
-    let c1 = "jerry " ++ (show (i::Int))
-    bindText stmt 1 c1
-    bindInt  stmt 2 i
+    let c1 = "jerry " ++ (show i)
+    bind stmt [SQLText c1, SQLInteger $ fromIntegral i]
     step stmt
+    return ()
     when (i+1 < n) $ do
 	reset stmt
 	insrows (i+1) n stmt
 
 -----------------------------------------------
-mysql = "select * from t1 limit 3;"
-mysql2 = "select count (*) from t1;" -- will fail because of bad patter in let
-
-sql1 conn = bracket (prepare conn mysql)
-		    (\stmt -> finalize stmt)
-		    (\stmt -> prows stmt)
+prows_sql = "select * from t1 limit 3;"
+    -- "select count (*) from t1;" -- will fail because of bad patter in let
 
 prows stmt = do
     rc <- step stmt
@@ -49,13 +54,17 @@ prows stmt = do
 main = do
     flip catch (\e -> print e) $ do
 	conn <- open "test.db"
-	exec conn "drop table t1"
+
+	-- Ignore error
+	execE conn "drop table t1"
+	execE conn "drop table t1"
+
 	exec conn "create table t1 (c1 text, c2 integer)"
 	exec conn "begin"
 	exec conn "delete from t1"
 
-	inserter conn 50000
-	sql1 conn
+	execf conn insrows_sql (insrows 0 50000)
+	execf conn prows_sql prows
 
 	exec conn "commit"
 	close conn
