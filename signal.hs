@@ -3,24 +3,23 @@ import Control.Concurrent
 import Data.IORef
 import Foreign
 
-zsignal :: IORef Int
-zsignal = unsafePerformIO $ newIORef 0
+data Sigs = Sigs {sigint::Int, sigquit::Int}
+
+zsignal :: IORef Sigs
+zsignal = unsafePerformIO $ newIORef (Sigs 0 0)
 
 handler :: IO ()
-handler = writeIORef zsignal 1
+handler = writeIORef zsignal (Sigs 1 1)
 
 initSignal :: [Signal] -> IO ()
-initSignal [] = return ()
-initSignal (s:sx) = do
-    installHandler s (Catch handler) Nothing
-    initSignal sx
+initSignal sx = mapM_ (\s->installHandler s (Catch handler) Nothing) sx
 
-gotSignal :: IO Int
+gotSignal :: IO (Sigs)
 gotSignal = readIORef zsignal
 
 mloop = do
     threadDelay 1
-    x <- gotSignal
+    Sigs x y <- gotSignal
     if x==0 then mloop
     else do
 	putStrLn "Shutting down"

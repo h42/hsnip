@@ -1,4 +1,5 @@
 {-
+-- Should use Control.Exception veraion - below
 import System.IO.Error  -- catch is already in prelude
 oldCatch = do
     catch
