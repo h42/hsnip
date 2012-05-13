@@ -1,0 +1,18 @@
+{-# LANGUAGE ForeignFunctionInterface #-}
+import Foreign
+import Foreign.C.Types
+import Foreign.C.String
+-- import Foreign.Ptr
+-- import Foreign.Marshal.Array
+
+foreign import ccall "getfilemode" getfilemode :: CString -> IO CInt
+
+getFileMode :: String -> IO Int
+getFileMode fn = do
+    s <- newCString fn
+    m <- getfilemode s
+    return (fromIntegral m)
+
+main = do
+    m <- getFileMode "temp"
+    putStrLn $ show m
