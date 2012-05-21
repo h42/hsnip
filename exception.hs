@@ -1,3 +1,4 @@
+{-# LANGUAGE ScopedTypeVariables #-}
 -- Old catch in prelude. Should use Control.Exception version - below
 import Control.Exception
 import Control.Monad.Error
@@ -40,7 +41,7 @@ type Etype a = Either String a
 
 myhandle :: String -> IO (Etype a) -> IO (Etype a)
 myhandle emsg func = do
-    handle ((\e -> return (Left emsg)) :: SomeException -> IO (Etype a) )
+    handle (\(e :: IOException) -> return (Left emsg))
 	func -- should return (Right a)
 
 mytest :: IO ()
