@@ -1,5 +1,5 @@
 HSFLAGS = -fwarn-name-shadowing  -XOverloadedStrings
-CLG = $(HSFLAGS) -dynamic --make -O2
+CLG = $(HSFLAGS) -dynamic --make -O
 
 PROGS=utf8
 

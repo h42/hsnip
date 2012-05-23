@@ -48,31 +48,19 @@ u8fromChar c
 --
 -- UNCONS
 --
-
 badchar = '\xfffd'
-
-{-
-u8toChar :: [Word8] -> (Char, [Word8])
-u8toChar (w:ws)
-    | w < 0x80 = (chr $ fromIntegral w, ws)
-    | w < 0xc0 = (badchar, ws)
-    | w < 0xe0 = if not $ null ws then byte2 w ws else (badchar, ws)
-    | w < 0xf0 = if length ws >= 2 then byte3 w ws else (badchar, ws)
-    | w < 0xf8 = if length ws >= 3 then byte4 w ws else (badchar, ws)
-    | otherwise = (badchar, ws)
--}
 
 uncons :: B.ByteString -> Maybe (Char, B.ByteString)
 uncons (B.null -> True) = Nothing
 uncons (B.uncons -> Just (w, bs))
-    | w < 0x80 = Just (chr $ fromIntegral w, bs)
+    | w < 0x80 = Just (chr $ fromEnum w, bs)
     | w < 0xc0 = Just (badchar, bs)
-    | w < 0xe0 = if not (B.null bs)  then Just (uncons2 w bs)
-				     else Just (badchar, bs)
-    | w < 0xf0 = if B.length bs >= 2  then Just (uncons3 w bs)
-				      else Just (badchar, bs)
-    | w < 0xf0 = if B.length bs >= 2  then Just (uncons4 w bs)
-				      else Just (badchar, bs)
+    | w < 0xe0 = Just $ if B.length bs >= 1  then uncons2 w bs
+					     else (badchar, bs)
+    | w < 0xf0 = Just $ if B.length bs >= 2  then (uncons3 w bs)
+					     else (badchar, bs)
+    | w < 0xf0 = Just $ if B.length bs >= 3  then (uncons4 w bs)
+					     else (badchar, bs)
 
 uncons2 w bs = uc  where
     w2 = B.head bs
@@ -94,25 +82,38 @@ uncons4 w bs = uc  where
 
 byte2 :: Word8 -> Word8 -> Char
 byte2 w w2 =
-    chr $ ((fromIntegral w .&. 0x1f) `shiftL` 6)
-	  + (fromIntegral w2 .&. 0x3f )
+    chr $ ((fromEnum w .&. 0x1f) `shiftL` 6)
+	  + (fromEnum w2 .&. 0x3f )
 
 byte3 :: Word8 -> Word8 -> Word8 -> Char
 byte3 w w2 w3 =
-    chr $  ((fromIntegral w .&. 0x0f) `shiftL` 12)
-	 + ((fromIntegral w2 .&. 0x3f) `shiftL` 6)
-	 +  (fromIntegral w3 .&. 0x3f )
+    chr $  ((fromEnum w .&. 0x0f) `shiftL` 12)
+	 + ((fromEnum w2 .&. 0x3f) `shiftL` 6)
+	 +  (fromEnum w3 .&. 0x3f )
 
 byte4 :: Word8 -> Word8 -> Word8 -> Word8 -> Char
 byte4 w w2 w3 w4 =
-	chr $  ((fromIntegral w .&. 0x07) `shiftL` 18)
-	      + ((fromIntegral w2 .&. 0x3f) `shiftL` 12)
-	      + ((fromIntegral w3 .&. 0x3f) `shiftL` 6)
-	      +  (fromIntegral w4 .&. 0x3f )
+	chr $  ((fromEnum w .&. 0x07) `shiftL` 18)
+	      + ((fromEnum w2 .&. 0x3f) `shiftL` 12)
+	      + ((fromEnum w3 .&. 0x3f) `shiftL` 6)
+	      +  (fromEnum w4 .&. 0x3f )
 
 chk2 w2 = w2 .&. 0xc0 == 0x80
 chk3 w2 w3 = w2 .&. 0xc0 == 0x80 && w3 .&. 0xc0 == 0x80
 chk4 w2 w3 w4 = w2 .&. 0xc0 == 0x80 && w3 .&. 0xc0 == 0x80 && w4 .&. 0xc0 == 0x80
+
+--
+-- UNPACK
+--
+unpack :: B.ByteString -> String
+unpack bs | B.null bs = ""
+unpack bs = unpack' bs (B.length bs - 1) 0 0 []
+
+unpack' :: B.ByteString -> Int -> Int -> Int -> [Char] -> String
+unpack' bs ind acc bcnt str
+    | ind < 0 = str
+    | w < 0x80 = unpack' bs (ind-1) 0 0 (chr (fromEnum w) : str)
+  where w = B.index bs ind
 
 --------------------------------------------------
 --------------------------------------------------
@@ -130,18 +131,21 @@ t1 = do
     let cnt = t1a 0 (10^7) 'a' 0
     putStrLn $ "cnt = " ++ show cnt
 
-{-
-t2 c = do
-    let w = u8fromChar c
-	wi = map fromIntegral w :: [Int]
-    mapM (printf "%x ")  wi
-    putStrLn ""
 
-    let (oc,_) = u8toChar w
-    printf "c=%c oc=%c\n\n" c oc
--}
+t2 = do
+    let ua = map (\i -> chr (0xa0 + i)) [1..10]
+	bs = u8fromString ua
+
+	ucloop (uncons -> Nothing) = putChar '\n'
+	ucloop (uncons -> Just (c,bs2)) = do
+	    putChar c
+	    ucloop bs2
+
+    putStrLn ua
+    B.putStrLn bs
+    ucloop bs
+
 
 main = do
-    t1
- --   t2 (chr 0xa2)
- --   t2 ('a')
+--    t1
+    t2
