@@ -56,52 +56,46 @@ uncons (B.null -> True) = Nothing
 uncons (B.uncons -> Just (w, bs))
     | w < 0x80 = Just (chr $ fromEnum w, bs)
     | w < 0xc0 = Just (badchar, bs)
-    | w < 0xe0 = Just $ if B.length bs >= 1  then uncons2 w bs
-					     else (badchar, bs)
-    | w < 0xf0 = Just $ if B.length bs >= 2  then (uncons3 w bs)
-					     else (badchar, bs)
-    | w < 0xf8 = Just $ if B.length bs >= 3  then (uncons4 w bs)
-					     else (badchar, bs)
+    | ismb2    = uncons2 w' bs
+    | ismb3    = uncons3 w' bs
+    | ismb4    = uncons4 w' bs
+    | otherwise = Just (badchar, bs)
+    where
+	w' = fromEnum w
+	ismb2 = w'.&.0xe0 == 0xc0 && B.length bs >= 1
+	ismb3 = w'.&.0xf0 == 0xe0 && B.length bs >= 2
+	ismb4 = w'.&.0xf8 == 0xf0 && B.length bs >= 3
 
-uncons2 w bs = uc  where
-    w2 = B.head bs
-    uc = if chk2 w2  then (byte2 w w2, B.tail bs)
-	 else (badchar, B.tail bs)
+uncons2 w bs =
+    if acc >= 0 then  Just (chr $ ((w .&. 0x1f) `shiftL` 6) + acc, B.tail bs)
+    else Just (badchar, bs)
+    where w2 = fromEnum $ B.head bs
+	  acc = if w2 .&. 0xc0 == 0x80 then  w2 .&. 0x3f
+		else -1
 
-uncons3 w bs = uc  where
-    w2 = B.head bs
-    w3 = B.index bs 1
-    uc = if chk3 w2 w3  then (byte3 w w2 w3, B.drop 2 bs)
-	 else (badchar, bs)
+uncons3 w bs =
+    if acc >= 0 then
+	Just (chr $ ((w .&. 0x0f) `shiftL` 12) + acc, B.drop 2 bs)
+    else Just (badchar, bs)
+    where
+	w2 = fromEnum $ B.head bs
+	w3 = fromEnum $ B.index bs 1
+	acc = if chker w2 && chker w3 then  (w2 .&. 0x3f) + (w3 .&. 0x3f)
+	      else -1
 
-uncons4 w bs = uc  where
-    w2 = B.head bs
-    w3 = B.index bs 1
-    w4 = B.index bs 2
-    uc = if chk4 w2 w3 w4 then (byte4 w w2 w3 w4, B.drop 3 bs)
-	 else (badchar, bs)
+uncons4 w bs =
+    if acc >= 0 then
+	Just (chr $ ((w .&. 0x07) `shiftL` 18) + acc, B.drop 3 bs)
+    else Just (badchar, bs)
+    where
+	w2 = fromEnum $ B.head bs
+	w3 = fromEnum $ B.index bs 1
+	w4 = fromEnum $ B.index bs 2
+	acc = if chker w2 && chker w3 && chker w4 then
+		  (w2 .&. 0x3f) + (w3 .&. 0x3f) + (w4 .&. 0x3f)
+	      else -1
 
-byte2 :: Word8 -> Word8 -> Char
-byte2 w w2 =
-    chr $ ((fromEnum w .&. 0x1f) `shiftL` 6)
-	  + (fromEnum w2 .&. 0x3f )
-
-byte3 :: Word8 -> Word8 -> Word8 -> Char
-byte3 w w2 w3 =
-    chr $  ((fromEnum w .&. 0x0f) `shiftL` 12)
-	 + ((fromEnum w2 .&. 0x3f) `shiftL` 6)
-	 +  (fromEnum w3 .&. 0x3f )
-
-byte4 :: Word8 -> Word8 -> Word8 -> Word8 -> Char
-byte4 w w2 w3 w4 =
-	chr $  ((fromEnum w .&. 0x07) `shiftL` 18)
-	      + ((fromEnum w2 .&. 0x3f) `shiftL` 12)
-	      + ((fromEnum w3 .&. 0x3f) `shiftL` 6)
-	      +  (fromEnum w4 .&. 0x3f )
-
-chk2 w2 = w2 .&. 0xc0 == 0x80
-chk3 w2 w3 = w2 .&. 0xc0 == 0x80 && w3 .&. 0xc0 == 0x80
-chk4 w2 w3 w4 = w2 .&. 0xc0 == 0x80 && w3 .&. 0xc0 == 0x80 && w4 .&. 0xc0 == 0x80
+chker w = w .&. 0xc0 == 0x80
 
 --
 -- UNPACK
@@ -113,8 +107,8 @@ unpack bs = unpack' bs (B.length bs - 1) 0 0 []
 unpack' :: B.ByteString -> Int -> Int -> Int -> [Char] -> String
 unpack' bs ind acc bytes str
     | ind < 0 = str
-    | w < 0x80 = unpack' bs (ind-1) 0 0 (chr (fromEnum w) : str)
-    | w < 0xc0 =  unpack' bs (ind-1) ((acc `shiftL` 6) + (fromEnum w .&. 0x3f))
+    | w < 0x80 = unpack' bs (ind-1) 0 0 (chr w : str)
+    | w < 0xc0 =  unpack' bs (ind-1) ((acc `shiftL` 6) + (w .&. 0x3f))
 			  (bytes+1)  str
     | ismb2 && bytes == 1 = unpack' bs (ind-1) 0 0 (mbyte2 : str)
     | ismb3 && bytes == 2 = unpack' bs (ind-1) 0 0 (mbyte3 : str)
