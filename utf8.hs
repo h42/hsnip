@@ -2,6 +2,7 @@
 import Data.List
 import Control.Monad
 import qualified Data.ByteString as B
+import qualified Data.ByteString.Char8 as C
 import Data.Word
 import Data.Char
 import Data.Bits
@@ -28,8 +29,8 @@ u8Unlines ss = (B.concat $ intersperse nl ss) `B.append` nl
 --
 -- FROM STRING
 --
-u8fromString :: String -> B.ByteString
-u8fromString s = B.pack $ concatMap u8fromChar s
+pack :: String -> B.ByteString
+pack s = B.pack $ concatMap u8fromChar s
 
 u8fromChar :: Char -> [Word8]
 u8fromChar c
@@ -59,7 +60,7 @@ uncons (B.uncons -> Just (w, bs))
 					     else (badchar, bs)
     | w < 0xf0 = Just $ if B.length bs >= 2  then (uncons3 w bs)
 					     else (badchar, bs)
-    | w < 0xf0 = Just $ if B.length bs >= 3  then (uncons4 w bs)
+    | w < 0xf8 = Just $ if B.length bs >= 3  then (uncons4 w bs)
 					     else (badchar, bs)
 
 uncons2 w bs = uc  where
@@ -110,13 +111,35 @@ unpack bs | B.null bs = ""
 unpack bs = unpack' bs (B.length bs - 1) 0 0 []
 
 unpack' :: B.ByteString -> Int -> Int -> Int -> [Char] -> String
-unpack' bs ind acc bcnt str
+unpack' bs ind acc bytes str
     | ind < 0 = str
     | w < 0x80 = unpack' bs (ind-1) 0 0 (chr (fromEnum w) : str)
-  where w = B.index bs ind
+    | w < 0xc0 =  unpack' bs (ind-1) ((acc `shiftL` 6) + (fromEnum w .&. 0x3f))
+			  (bytes+1)  str
+    | ismb2 && bytes == 1 = unpack' bs (ind-1) 0 0 (mbyte2 : str)
+    | ismb3 && bytes == 2 = unpack' bs (ind-1) 0 0 (mbyte3 : str)
+    | ismb4 && bytes == 3 = unpack' bs (ind-1) 0 0 (mbyte4 : str)
+    | otherwise = unpack' bs (ind-1) 0 0 (badchar : str)
+    where
+	w = fromEnum $ B.index bs ind
+	mbyte2 = chr $ ((w .&. 0x1f) `shiftL` 6) + acc
+	mbyte3 = chr $ ((w .&. 0x0f) `shiftL` 12) + acc
+	mbyte4 = chr $ ((w .&. 0x07) `shiftL` 18) + acc
+	ismb2 = w.&.0xe0 == 0xc0
+	ismb3 = w.&.0xf0 == 0xe0
+	ismb4 = w.&.0xf8 == 0xf0
 
 --------------------------------------------------
 --------------------------------------------------
+
+t_unpack = do
+    let ua = map (\i -> chr (0xa0 + i)) [1..10]
+	sx = "Hey man, " ++ ua ++ "  ,this is only a test"
+	bs2 = pack sx
+	sx2 = unpack bs2
+    putStrLn sx
+    putStrLn $ sx2 ++ " - len = " ++ (show (length sx2))
+	       ++ " - " ++ (show (B.length bs2))
 
 t1a i n c cnt
     | i >= n  = cnt
@@ -134,7 +157,7 @@ t1 = do
 
 t2 = do
     let ua = map (\i -> chr (0xa0 + i)) [1..10]
-	bs = u8fromString ua
+	bs = pack ua
 
 	ucloop (uncons -> Nothing) = putChar '\n'
 	ucloop (uncons -> Just (c,bs2)) = do
@@ -148,4 +171,5 @@ t2 = do
 
 main = do
 --    t1
-    t2
+--    t2
+    t_unpack
