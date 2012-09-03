@@ -1,12 +1,19 @@
 HSFLAGS = -fwarn-name-shadowing  -XOverloadedStrings
-CLG = $(HSFLAGS) -dynamic --make -O
+CLG = $(HSFLAGS) -dynamic --make -O2 -threaded -rtsopts
 
-PROGS=utf8
+PROGS=jpd
 
 all:$(PROGS)
 
+jpd : jpd.hs
+	ghc $(CLG) -o jpd jpd.hs
+
+%.o : %.hs
+	ghc $(CLG) -c -o $@ $<
+
 % : %.hs
 	ghc $(CLG) -o $@ $<
+
 
 clean:
 		-rm *.hi *.o $(PROGS)

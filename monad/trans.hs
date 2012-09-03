@@ -1,19 +1,20 @@
-import Data.List
-import Data.Char
-import System.Directory -- (doesDirectoryExist)
-import Control.Monad (forM_, when)
-import Control.Monad.Trans (liftIO)
-import Control.Monad.Writer -- (WriterT, tell)
-
-wt :: WriterT [String] IO ()
-wt = do
-    cont <- liftIO (getDirectoryContents ".")
-    mapM_ tell [cont]
-    tell ["hey"]
+import Control.Monad.State
 
 main = do
-    --w <- runWriterT wt
-    w <- execWriterT wt
-    mapM_ putStrLn (sortBy (\x y -> compare (map toLower x) (map toLower y)) w)
-    return ()
+    evalStateT t1 [] >>= print
 
+t1 :: StateT [Char] IO ()
+t1 = do
+    s <- lift getLine
+    lift (putStrLn s)
+    modify (s++)
+    modify (s++)
+    modify (s++)
+    st <- get
+    lift (print st)
+    put "xxx"
+    modify (t2 "yyy")
+    st<-get
+    lift (print st)
+
+t2 parm st = st ++ parm

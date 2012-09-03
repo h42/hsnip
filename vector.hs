@@ -1,6 +1,26 @@
+{-# LANGUAGE BangPatterns #-}
 import qualified Data.Vector as V
---import qualified Data.Vector.Unboxed as V
+import qualified Data.Vector.Unboxed.Mutable as VM
 
+--
+-- Mutable Vector
+--
+mvec = do
+    let n = 10000000 :: Int
+	x = 0 :: Int
+    vm <- VM.new n :: IO (VM.IOVector Int)
+    mvec2 vm 0 n x
+    VM.read vm (n-1) >>= print
+
+mvec2 vm !i !n !x = do
+    if i<n then do
+	VM.unsafeWrite vm i x --(rem i 100) x
+	mvec2 vm (i+1) n (i+1)
+    else return ()
+
+--
+-- Pure Vector
+--
 t0 = V.replicate 1000 0
 t1 = V.enumFromN 1 1000
 t2 = V.generate 100 (^2)
@@ -20,4 +40,4 @@ t16 = V.init t1
 t17 = V.length t1
 
 main = do
-    print 42
+    mvec
