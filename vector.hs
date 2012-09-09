@@ -1,6 +1,7 @@
 {-# LANGUAGE BangPatterns #-}
 import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed.Mutable as VM
+import Control.Monad
 
 --
 -- Mutable Vector
@@ -39,5 +40,30 @@ t15 = V.last t1
 t16 = V.init t1
 t17 = V.length t1
 
+mvec4 = do -- SLOW
+    let m = 1000
+	n = 5000 -- outer loop
+    vm <- VM.new m :: IO (VM.IOVector Int)
+    {-
+    forM [1..n] $ \j -> do
+	forM [0..(m-1)] $ \i -> do
+    -}
+    forM [(i,j)| i<-[0..m-1],j<-[1..n]] $ \ (i,j) -> do
+	    i `seq` j `seq` VM.unsafeWrite vm i (j*i) --(rem i 100) x
+    VM.read vm (m-1) >>= print
+
+mvec5  = do
+    let n = 1000
+	m = 5000
+    vm <- VM.new m :: IO (VM.IOVector Int)
+    mvec5' vm [(i,j)|i<-[0..m-1],j<-[1..n]]
+    VM.read vm (m-1) >>= print
+
+mvec5' _ [] = return ()
+mvec5' vm ((i,j):inds) = do
+    VM.unsafeWrite vm i (j*i)
+    mvec5' vm inds
+
+
 main = do
-    mvec
+    mvec4
