@@ -1,10 +1,16 @@
 #include <stdio.h>
 
-void xxx(int r, int c, int m[r][c]) {
-    int i,j;
-    for (i=0;i<r;i++) {
-	for (j=0;j<c;j++) {
-	    m[i][j]=0;
-	}
+void addMat(int r, int c, double m[r*c], double m2[r*c]) {
+    int i;
+    for (i=0; i<r*c; i++) {
+	m[i] += m2[i];
     }
 }
+
+void add2Mat(int r, int c, double m[r*c], double m1[r*c], double m2[r*c]) {
+    int i;
+    for (i=0; i<r*c; i++) {
+	m[i] = m1[i] + m2[i];
+    }
+}
+
