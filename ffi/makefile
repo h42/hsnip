@@ -1,8 +1,8 @@
-HSFLAGS = -O -fwarn-name-shadowing -i/home/jerry/haskell/lib
+HSFLAGS = -O -fwarn-name-shadowing -i/home/jerry/haskell/
 CLG = $(HSFLAGS) -dynamic --make
-CFLAGS=-Wall
+CFLAGS=-Wall -O
 
-PROGS=prog1 prog2 hmat
+PROGS= hmat
 
 % : %.hs
 	ghc $(CLG) -o $@ $<
