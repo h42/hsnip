@@ -26,6 +26,14 @@ int getMatCols(Matrix *m) {
     return m->cols;
 }
 
+double getMatElem(Matrix *m, int i, int j) {
+    return m->dv[i * m->cols + j];
+}
+
+void putMatElem(Matrix *m, int i, int j, double d) {
+    m->dv[i * m->cols + j] = d;
+}
+
 void addMat(Matrix *m, Matrix *m2) {
     int i;
     for (i=0; i<m->rows * m->cols; i++) {
