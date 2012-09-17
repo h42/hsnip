@@ -3,6 +3,7 @@
 #include <math.h>
 
 #define ii (i*c+i)
+#define jj (j*c+j)
 #define ij (i*c+j)
 #define ji (j*c+i)
 #define ik (i*c+k)
@@ -109,6 +110,7 @@ int eliminate(Matrix *m) {
     int i,j,k,maxp;
     int r=m->rows, c=m->cols;
     double t, maxv, *dv=m->dv;
+    if (r>c || r<c-1) return -1;
     for (i=0; i<r; i++) {
 	maxp=i;
 	maxv=fabs(dv[ii]);
@@ -123,6 +125,7 @@ int eliminate(Matrix *m) {
 	    dv[ik] = dv[maxp*c + k];
 	    dv[maxp*c + k] = t;
 	}
+	if (dv[ii]==0) return -1; // Should we check for very low divsor
 	for (j=i+1; j<r; j++) {
 	    for (k=c-1; k>=i; k--) {
 		dv[jk] -= dv[ik] * dv[ji]/ dv[ii];
@@ -131,3 +134,19 @@ int eliminate(Matrix *m) {
     }
     return 0;
 }
+
+int solve(Matrix *m, double *X) {
+    int rc = eliminate(m);
+    if (rc) return rc;
+    int j,k;
+    int r=m->rows, c=m->cols;
+    double t, *dv=m->dv;
+    for (j=r-1; j>=0; j--) {
+	if (dv[jj] == 0) return -1;
+	t=0;
+	for (k=j+1; k<c-1; k++) t += dv[jk] * X[k];
+	X[j] = (dv[j*c + (c-1)] - t) / dv[jj];
+    }
+    return 0;
+}
+

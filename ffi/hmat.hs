@@ -45,6 +45,7 @@ foreign import ccall "multMat" c_multMat
     :: Ptr a -> Ptr a -> Ptr a -> IO (CInt)
 foreign import ccall "incMat" c_incMat       :: Ptr a -> CDouble -> IO ()
 foreign import ccall "scaleMat" c_scaleMat   :: Ptr a -> CDouble -> IO ()
+foreign import ccall "solve" c_solve :: Ptr a -> Ptr CDouble -> IO CInt
 foreign import ccall "idMat" idMat           :: Ptr a -> IO ()
 foreign import ccall "newMat" newMat_c  :: CInt -> CInt ->  IO (Ptr a)
 foreign import ccall "transMat" transMat       :: Ptr a -> IO ()
@@ -97,7 +98,22 @@ multMat m m1 m2 = do
 incMat m x = c_incMat m (realToFrac x)
 scaleMat m x = c_scaleMat m (realToFrac x)
 
-eliminate m = fmap fromIntegral $ c_eliminate m
+eliminate m = do
+    rc <- fmap fromIntegral $ c_eliminate m
+    return $ if rc/=0 then Nothing else Just rc
+
+solve m = do
+    rc <- fmap fromIntegral $ c_eliminate m
+    if rc /= 0 then return Nothing
+    else do
+	r <- fmap fromIntegral $ getRows m
+	xv <- mallocArray r :: IO (Ptr CDouble)
+	rc' <- c_solve m xv
+	if rc'/=0 then return Nothing
+	else do
+	    xl <- peekArray r xv
+	    free xv
+	    return   $ Just $ map realToFrac xl
 
 main = do
     m <- fromList 2 2 [1,3..]
@@ -121,8 +137,9 @@ main = do
     putStrLn "Eliminate ---------"
     m4<-fromList 2 3 [4,3,10, 6,2,10]
     eliminate m4 >> showMat m4 1 >>= putStrLn
+    solve m4 >>= print
     putStrLn ""
-    m5<-fromList 2 2 [4,3, 6,2]
+    m5<-fromList 2 2 [4,3, 8,6]
     eliminate m5 >> showMat m5 1 >>= putStrLn
 
     {-
