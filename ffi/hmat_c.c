@@ -1,8 +1,14 @@
 #include <stdio.h>
 #include <malloc.h>
+#include <math.h>
 
+#define ii (i*c+i)
 #define ij (i*c+j)
 #define ji (j*c+i)
+#define ik (i*c+k)
+#define ki (k*c+i)
+#define jk (j*c+k)
+#define kj (k*c+j)
 
 typedef struct Matrix {
     int rows,cols;
@@ -96,3 +102,32 @@ void transMat(Matrix *m) {
     }
 }
 
+//
+// Gaussian Elimination
+//
+int eliminate(Matrix *m) {
+    int i,j,k,maxp;
+    int r=m->rows, c=m->cols;
+    double t, maxv, *dv=m->dv;
+    for (i=0; i<r; i++) {
+	maxp=i;
+	maxv=fabs(dv[ii]);
+	for (j=i+1; j<r; j++) {
+	    if ((t=fabs(dv[ji])) > maxv) {
+		maxp=j;
+		maxv=t;
+	    }
+	}
+	for (k=i; k<c; k++) {
+	    t = dv[ik];
+	    dv[ik] = dv[maxp*c + k];
+	    dv[maxp*c + k] = t;
+	}
+	for (j=i+1; j<r; j++) {
+	    for (k=c-1; k>=i; k--) {
+		dv[jk] -= dv[ik] * dv[ji]/ dv[ii];
+	    }
+	}
+    }
+    return 0;
+}

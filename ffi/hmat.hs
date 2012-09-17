@@ -10,14 +10,16 @@ module Main (
     ,getCols
     ,getElem
     ,putElem
-    ,addMat
-    ,multMat
-    ,incMat
-    ,scaleMat
-    ,idMat
-    ,zeroMat
-    ,transMat
     ,showMat
+
+    ,addMat
+    ,eliminate
+    ,idMat
+    ,incMat
+    ,multMat
+    ,scaleMat
+    ,transMat
+    ,zeroMat
 ) where
 
 import Control.Monad
@@ -38,6 +40,7 @@ foreign import ccall "getElem" c_getElem  :: Ptr a ->  CInt -> CInt -> IO Double
 foreign import ccall "putElem" c_putElem
     :: Ptr a ->  CInt -> CInt -> CDouble -> IO ()
 foreign import ccall "addMat" addMat         :: Ptr a -> Ptr a -> IO ()
+foreign import ccall "eliminate" c_eliminate :: Ptr a -> IO CInt
 foreign import ccall "multMat" c_multMat
     :: Ptr a -> Ptr a -> Ptr a -> IO (CInt)
 foreign import ccall "incMat" c_incMat       :: Ptr a -> CDouble -> IO ()
@@ -94,6 +97,8 @@ multMat m m1 m2 = do
 incMat m x = c_incMat m (realToFrac x)
 scaleMat m x = c_scaleMat m (realToFrac x)
 
+eliminate m = fmap fromIntegral $ c_eliminate m
+
 main = do
     m <- fromList 2 2 [1,3..]
     addMat m m
@@ -112,6 +117,14 @@ main = do
     showMat m1 1 >>= putStrLn
     showMat m2 1 >>= putStrLn
     multMat m3 m1 m2  >> showMat m3 1 >>= putStrLn
+
+    putStrLn "Eliminate ---------"
+    m4<-fromList 2 3 [4,3,10, 6,2,10]
+    eliminate m4 >> showMat m4 1 >>= putStrLn
+    putStrLn ""
+    m5<-fromList 2 2 [4,3, 6,2]
+    eliminate m5 >> showMat m5 1 >>= putStrLn
+
     {-
     put m 2 2 27.1
     get m 0 3 >>= print
