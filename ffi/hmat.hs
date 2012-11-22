@@ -40,6 +40,7 @@ foreign import ccall "getElem" c_getElem  :: Ptr a ->  CInt -> CInt -> IO Double
 foreign import ccall "putElem" c_putElem
     :: Ptr a ->  CInt -> CInt -> CDouble -> IO ()
 foreign import ccall "addMat" addMat         :: Ptr a -> Ptr a -> IO ()
+foreign import ccall "determinate" c_determinate :: Ptr a -> IO CInt
 foreign import ccall "eliminate" c_eliminate :: Ptr a -> IO CInt
 foreign import ccall "multMat" c_multMat
     :: Ptr a -> Ptr a -> Ptr a -> IO (CInt)
@@ -139,9 +140,13 @@ main = do
     eliminate m4 >> showMat m4 1 >>= putStrLn
     solve m4 >>= print
     putStrLn ""
-    m5<-fromList 2 2 [4,3, 8,6]
+    m5<-fromList 2 2 [1..4]
     eliminate m5 >> showMat m5 1 >>= putStrLn
 
+    putStrLn "Determinate ---------"
+    m6<-fromList 4 4 [1,4,-2,3, 2,2,0,4, 3,0,-1,2, 1,2,2,-3]
+    c_determinate m6 >>= print
+    showMat m6 1 >>= putStrLn
     {-
     put m 2 2 27.1
     get m 0 3 >>= print

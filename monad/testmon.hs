@@ -1,6 +1,3 @@
-import Control.Monad.Writer
-import Control.Monad.State
-
 {-
 f :: Int -> Writer [String] Int
 f x = do
@@ -17,10 +14,8 @@ stfunc = do
     push 2
     push 3
     pop
--}
 
 main = do
     print $ runWriter $f 3 >> f 4 >> f 5
     print $ runState stfunc []
-
-
+-}

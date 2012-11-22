@@ -150,3 +150,40 @@ int solve(Matrix *m, double *X) {
     return 0;
 }
 
+//
+// Determinate
+//
+
+int determinate(Matrix *m) {
+    int i,j,k,maxp;
+    int r=m->rows, c=m->cols;
+    double t, adj=1, maxv, *dv=m->dv;
+    if (r!=c) return 0;
+    for (i=0; i<r; i++) {
+	maxp=i;
+	maxv=fabs(dv[ii]);
+	for (j=i+1; j<r; j++) {
+	    if ((t=fabs(dv[ji])) > maxv) {
+		maxp=j;
+		maxv=t;
+	    }
+	}
+	if (maxp != i) {
+	    adj *= -1;
+	    for (k=i; k<c; k++) {
+		t = dv[ik];
+		dv[ik] = dv[maxp*c + k];
+		dv[maxp*c + k] = t;
+	    }
+	}
+	if (dv[ii]==0) return 0; // Should we check for very low divsor
+	for (j=i+1; j<r; j++) {
+	    t = dv[ji]/ dv[ii];
+	    //adj *= t;
+	    for (k=c-1; k>=i; k--) dv[jk] -= dv[ik] * t;
+	}
+    }
+    for (i=0,t=1;i<r;i++) t*=dv[ii];
+    return t*adj;
+}
+
