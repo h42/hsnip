@@ -52,4 +52,14 @@ mytest = do
 	return (Right s)
     print a
 
-main = mytest
+mytest2 :: IO Int
+mytest2 = do
+    let y = quot 4 2
+    evaluate y
+
+main = do
+    rc <- try (mytest2)  :: IO (Either SomeException Int)
+    print rc
+    case rc of
+	Left x -> putStrLn "bad"
+	Right x -> print x
