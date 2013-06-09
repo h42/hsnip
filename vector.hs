@@ -60,10 +60,10 @@ mvec5  = do
     VM.read vm (m-1) >>= print
 
 mvec5' _ [] = return ()
-mvec5' vm ((i,j):inds) = do
+mvec5' !vm (!(!i,!j):(!inds)) = do
     VM.unsafeWrite vm i (j*i)
     mvec5' vm inds
 
 
 main = do
-    mvec4
+    mvec5

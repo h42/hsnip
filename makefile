@@ -1,6 +1,6 @@
 HSFLAGS = -fwarn-name-shadowing  -XOverloadedStrings
 --CLG = $(HSFLAGS) -dynamic --make -O2 -threaded -rtsopts
-CLG = $(HSFLAGS)  --make -threaded -rtsopts
+CLG = $(HSFLAGS)  --make -O2 -threaded -rtsopts
 
 PROGS=jpd
 
