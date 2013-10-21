@@ -8,10 +8,10 @@ import Data.Array
 --a1 :: Int -> STArray Int Int
 a1 n = runSTArray $ do
     a <- newArray (1,n) 0
-    forM [1..n] $ \i -> do
+    forM_ [1..n] $ \i -> do
 	writeArray a i (i)
-    forM [1..1000] $ \j -> do
-	forM [1..n] $ \i -> do
+    forM_ [1..1000] $ \j -> do
+        forM_ [1..n] $ \i -> do
 	    x <- readArray a i
 	    writeArray a i (x+1)
     return a
