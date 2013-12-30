@@ -1,6 +1,8 @@
 import Control.Concurrent
 import Control.Exception
 
+-- SEE CHAN.HS FOR CHANNELS EXAMPL
+
 -- +RTS -N ?? -RTS must be include and prog compiled with -threaded to use xtra cores
 
 primes :: Int -> [Int]

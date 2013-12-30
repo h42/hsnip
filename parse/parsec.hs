@@ -50,7 +50,7 @@ eol = char '\n'
 
 main = do
     return ()
-    --passwd
+    passwd
     {-
     print $ pit ps
     print $ 42
