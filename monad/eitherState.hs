@@ -40,5 +40,5 @@ main = do
     --print $ runState pop [1,2,3,4,5]
     --print $ runState pop [1]
     --print $ runState pop []
-    --print $ runState (push 3 >> push 4) [1..5]
+    print $ runState (push 3 >> push 4) [1..5]
     print $ runState (map_st >> push 13 >> map_st) []
