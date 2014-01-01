@@ -13,6 +13,27 @@ instance Monad (Parse st) where
                     Left s -> Left s
                     Right (a, newParse) -> runParse (f a) newParse
 
+infixl 3 <|>
+
+(Parse h) <|> f = Parse newf where
+    newf st = case (h st) of
+                Left _ -> runParse (f  ) st
+                Right (a, newParse) -> Right (a, newParse)
+
+r1 :: Parse Int Bool
+r1 = Parse $ \st -> case st of
+         3 -> Left "all done"
+         _ -> Right (True, st+1)
+
+r2 :: Parse Int Bool
+r2 = Parse $ \st -> Right (True, st+1)
+
+r3 :: Parse Int Bool
+r3 = Parse $ \st -> Left "all done"
+
+main = do
+    print $ runParse (r1 <|> r2 <|> r3) 3
+
 char :: Char -> Parse String Char
 char c = Parse $ \st -> case st of
     (x:xs) -> if x==c then Right (c,xs)
@@ -63,4 +84,4 @@ doit = do
     return ()
 
 --main = print $ runParse (doit) "abc   defg"
-main = print $ runParse (line>>line>>line) "abc   defg\nline 2\r\nline 3\rline4"
+--main = print $ runParse (line>>line>>line) "abc   defg\nline 2\r\nline 3\rline4"
