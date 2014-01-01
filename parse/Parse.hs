@@ -43,6 +43,16 @@ eol = Parse $ \st -> case st of
     ('\r':xs)      ->  Right ((), xs)
     _              ->  Left ("char: Bad match")
 
+line :: Parse String String
+line = Parse $ \st ->
+    let (xs,ys') = break (\x -> x == '\r' || x == '\n') st
+        ans = case ys' of
+            ('\n':ys)      ->  Right (xs, ys)
+            ('\r':'\n':ys) ->  Right (xs, ys)
+            ('\r':ys)      ->  Right (xs, ys)
+            _              ->  Right (xs, [])
+    in ans
+
 doit = do
     char 'a'
     char 'b'
@@ -52,4 +62,5 @@ doit = do
     count 3 anyChar
     return ()
 
-main = print $ runParse (doit) "abc   defg"
+--main = print $ runParse (doit) "abc   defg"
+main = print $ runParse (line>>line>>line) "abc   defg\nline 2\r\nline 3\rline4"
