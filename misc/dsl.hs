@@ -1,5 +1,5 @@
 //
-// Copied from internet - do not know author
+// Copied from internet - do not know author, url(http://ashish.typepad.com/ashishs_niti/2007/06/haskell_dsl_and.html)
 //
 
 data Year = Y Int
